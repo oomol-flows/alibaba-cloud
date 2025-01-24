@@ -1,0 +1,29 @@
+nodes:
+  - task: self::ocr
+    title: "ocr #1"
+    node_id: ocr#1
+    inputs_from:
+      - handle: type
+        value: General
+      - handle: url
+        from_node:
+          - node_id: oss-upload#1
+            output_handle: url
+      - handle: accessKeyId
+        value: AliCloud,alibaba-cloud,AccessKey_ID
+      - handle: accessKeySecret
+        value: AliCloud,alibaba-cloud,AccessKey_Secret
+  - task: self::oss-upload
+    title: "oss-upload #1"
+    node_id: oss-upload#1
+    inputs_from:
+      - handle: region
+        value: oss-cn-hangzhou
+      - handle: accessKeyId
+        value: AliCloud,alibaba-cloud,AccessKey_ID
+      - handle: accessKeySecret
+        value: AliCloud,alibaba-cloud,AccessKey_Secret
+      - handle: bucket
+        value: oomol-flows
+      - handle: localfile
+        value: /oomol-driver/oomol-storage/截屏2024-12-26 17.34.08.png
