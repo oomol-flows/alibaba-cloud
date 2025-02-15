@@ -62,10 +62,6 @@ export default async function (
   const timestampInSeconds = Math.floor(Date.now() / 1000)
   const localfile_name = `${timestampInSeconds}_${path.basename(params.localfile)}`;
   const uploadResult = await client.put(localfile_name, params.localfile);
-  context.preview({
-    type: "image",
-    data: uploadResult.url,
-})
   return {
     originFilePath: params.localfile,
     url: uploadResult.url,

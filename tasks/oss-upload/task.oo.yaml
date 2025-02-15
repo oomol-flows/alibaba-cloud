@@ -18,12 +18,12 @@ inputs_def:
     json_schema:
       contentMediaType: oomol/secret
       type: string
-    value: ""
+    value: ${{OO_SECRET:AliCloud,AliCloud,AccessKey_ID}}
   - handle: accessKeySecret
     json_schema:
       contentMediaType: oomol/secret
       type: string
-    value: ""
+    value: ${{OO_SECRET:AliCloud,AliCloud,AccessKey_Secret}}
   - handle: bucket
     json_schema:
       type: string
@@ -32,7 +32,6 @@ inputs_def:
     json_schema:
       type: string
       ui:widget: file
-    value: ""
 outputs_def:
   - handle: url
     description: Output

@@ -26,4 +26,3 @@ nodes:
       - handle: bucket
         value: oomol-flows
       - handle: localfile
-        value: /oomol-driver/oomol-storage/截屏2024-12-26 17.34.08.png
