@@ -1,4 +1,4 @@
-version: 0.0.3
+version: 0.0.4
 scripts:
   # Script executed when the container is first loaded
   # eg: bootstrap: pip install pandas
@@ -10,5 +10,5 @@ dependencies:
 name: alibaba-cloud
 description: Various blocks based on Alibaba Cloud API services
 displayName: Alibaba Cloud
-releaseNotes: add update code
+releaseNotes: update readme
 repository: https://github.com/oomol-flows/alibaba-cloud
