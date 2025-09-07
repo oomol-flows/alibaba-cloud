@@ -1,0 +1,14 @@
+version: 0.0.5
+scripts:
+  # Script executed when the container is first loaded
+  # eg: bootstrap: pip install pandas
+  bootstrap: |
+    pnpm install && pip install -r requirements.txt
+icon: https://package-assets.oomol.com/packages/alibaba-cloud/0.0.1/files/package/icon.png
+dependencies:
+  {}
+name: alibaba-cloud
+description: Various blocks based on Alibaba Cloud API services
+displayName: Alibaba Cloud
+repository: https://github.com/oomol-flows/alibaba-cloud
+releaseNotes: add layer

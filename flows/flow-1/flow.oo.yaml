@@ -1,0 +1,14 @@
+nodes:
+  - task: self::oss-upload
+    title: "oss-upload #1"
+    node_id: oss-upload#1
+    inputs_from:
+      - handle: region
+        value: oss-cn-hangzhou
+      - handle: accessKeyId
+        value: ${{OO_SECRET:AliCloud,AliCloud,AccessKey_ID}}
+      - handle: accessKeySecret
+        value: ${{OO_SECRET:AliCloud,AliCloud,AccessKey_Secret}}
+      - handle: bucket
+        value: oomol-flows
+      - handle: localfile
