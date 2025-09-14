@@ -51,4 +51,4 @@ executor:
     spawn: false
     entry: main.ts
 title: oss-upload
-icon: ":fa6-solid:upload:"
+icon: ":carbon:cloud-upload:"

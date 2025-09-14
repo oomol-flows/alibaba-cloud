@@ -37,4 +37,4 @@ executor:
     spawn: false
     entry: main.ts
 title: ocr
-icon: ":fa6-solid:book-open-reader:"
+icon: ":carbon:scan-alt:"

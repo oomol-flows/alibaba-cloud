@@ -1,29 +1,11 @@
 {
   "nodes": {
-    "ocr#1": {
-      "contentWidth": 643.8222512367124,
-      "rfNode": {
-        "position": {
-          "x": 854.358332858111,
-          "y": 350.9915608411869
-        }
-      }
-    },
     "oss-upload#1": {
       "contentWidth": 450,
       "rfNode": {
         "position": {
           "x": 360,
           "y": 315
-        }
-      }
-    },
-    "markdown-preview#1": {
-      "contentWidth": 450,
-      "rfNode": {
-        "position": {
-          "x": 2190,
-          "y": 645
         }
       }
     }

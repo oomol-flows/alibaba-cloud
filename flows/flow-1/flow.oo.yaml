@@ -6,9 +6,10 @@ nodes:
       - handle: region
         value: oss-cn-hangzhou
       - handle: accessKeyId
-        value: ${{OO_SECRET:AliCloud,AliCloud,AccessKey_ID}}
+        value: ${{OO_SECRET:AliCloud,alibaba-cloud,AccessKey_ID}}
       - handle: accessKeySecret
-        value: ${{OO_SECRET:AliCloud,AliCloud,AccessKey_Secret}}
+        value: ${{OO_SECRET:AliCloud,alibaba-cloud,AccessKey_Secret}}
       - handle: bucket
         value: oomol-flows
       - handle: localfile
+        value: /oomol-driver/oomol-storage/a66c4895-77cb-4657-83ac-a9be40a19b8a_resized_235x400_cropped_235x200.jpg
