@@ -2,7 +2,9 @@ import type { Context } from "@oomol/types/oocana";
 import OSS from "ali-oss";
 import path from "path";
 import fs from "fs/promises";
+import { createReadStream } from "fs";
 import { lookup } from "mime-types";
+import crypto from "crypto";
 
 enum OssRegion {
   // China Regions
@@ -43,6 +45,8 @@ type Inputs = {
   customPath?: string,
   keepOriginalName?: boolean,
   maxRetries?: number,
+  enableResumableUpload?: boolean,
+  chunkSize?: number,
 }
 type Outputs = {
   url: string,
@@ -52,15 +56,98 @@ type Outputs = {
   mimeType: string,
   uploadTime: string,
   progress: number,
+  resumedFromCheckpoint?: boolean,
+  totalParts?: number,
 }
 
 
+
+interface UploadCheckpoint {
+  uploadId: string;
+  objectKey: string;
+  fileHash: string;
+  fileSize: number;
+  chunkSize: number;
+  uploadedParts: { partNumber: number; etag: string }[];
+  createdAt: string;
+}
+
+interface PartUploadResult {
+  partNumber: number;
+  etag: string;
+}
 
 /**
  * Sleep function for retry delays
  */
 async function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Calculate file hash for checkpoint validation
+ */
+async function calculateFileHash(filePath: string): Promise<string> {
+  const hash = crypto.createHash('md5');
+  const stream = createReadStream(filePath);
+
+  for await (const chunk of stream) {
+    hash.update(chunk);
+  }
+
+  return hash.digest('hex');
+}
+
+/**
+ * Get checkpoint storage path
+ */
+function getCheckpointPath(filePath: string, objectKey: string): string {
+  const hash = crypto.createHash('md5').update(filePath + objectKey).digest('hex');
+  return `/tmp/oss-upload-${hash}.json`;
+}
+
+/**
+ * Save upload checkpoint
+ */
+async function saveCheckpoint(checkpoint: UploadCheckpoint, checkpointPath: string): Promise<void> {
+  await fs.writeFile(checkpointPath, JSON.stringify(checkpoint, null, 2), 'utf-8');
+}
+
+/**
+ * Load upload checkpoint
+ */
+async function loadCheckpoint(checkpointPath: string): Promise<UploadCheckpoint | null> {
+  try {
+    const data = await fs.readFile(checkpointPath, 'utf-8');
+    return JSON.parse(data) as UploadCheckpoint;
+  } catch (error) {
+    return null;
+  }
+}
+
+/**
+ * Remove checkpoint file
+ */
+async function removeCheckpoint(checkpointPath: string): Promise<void> {
+  try {
+    await fs.unlink(checkpointPath);
+  } catch (error) {
+    // Ignore error if file doesn't exist
+  }
+}
+
+/**
+ * Read file chunk
+ */
+async function readFileChunk(filePath: string, start: number, size: number): Promise<Buffer> {
+  const buffer = Buffer.alloc(size);
+  const fd = await fs.open(filePath, 'r');
+  try {
+    const result = await fd.read(buffer, 0, size, start);
+    return buffer.subarray(0, result.bytesRead);
+  } finally {
+    await fd.close();
+  }
 }
 
 /**
@@ -104,6 +191,130 @@ function generateObjectKey(
   }
 
   return finalFileName;
+}
+
+/**
+ * Resumable multipart upload with checkpoint support
+ */
+async function resumableMultipartUpload(
+  client: OSS,
+  objectKey: string,
+  filePath: string,
+  fileSize: number,
+  mimeType: string,
+  chunkSize: number,
+  context: Context<Inputs, Outputs>
+): Promise<{ resumedFromCheckpoint: boolean; totalParts: number }> {
+  const checkpointPath = getCheckpointPath(filePath, objectKey);
+  const fileHash = await calculateFileHash(filePath);
+
+  let checkpoint = await loadCheckpoint(checkpointPath);
+  let uploadId: string;
+  let uploadedParts: { partNumber: number; etag: string }[] = [];
+  let resumedFromCheckpoint = false;
+
+  // Validate existing checkpoint
+  if (checkpoint) {
+    if (checkpoint.fileHash === fileHash &&
+        checkpoint.fileSize === fileSize &&
+        checkpoint.objectKey === objectKey) {
+      // Valid checkpoint, resume upload
+      uploadId = checkpoint.uploadId;
+      uploadedParts = checkpoint.uploadedParts || [];
+      resumedFromCheckpoint = true;
+      console.log(`Resuming upload from checkpoint with ${uploadedParts.length} completed parts`);
+    } else {
+      // Invalid checkpoint, start fresh
+      await removeCheckpoint(checkpointPath);
+      checkpoint = null;
+    }
+  }
+
+  // Start new multipart upload if no valid checkpoint
+  if (!checkpoint) {
+    const initResult = await client.initMultipartUpload(objectKey, {
+      mime: mimeType,
+    });
+    uploadId = initResult.uploadId;
+
+    checkpoint = {
+      uploadId,
+      objectKey,
+      fileHash,
+      fileSize,
+      chunkSize,
+      uploadedParts: [],
+      createdAt: new Date().toISOString()
+    };
+
+    await saveCheckpoint(checkpoint, checkpointPath);
+  }
+
+  const totalParts = Math.ceil(fileSize / chunkSize);
+  const uploadedPartNumbers = new Set(uploadedParts.map(p => p.partNumber));
+
+  // Calculate initial progress based on uploaded parts
+  const initialProgress = Math.round((uploadedParts.length / totalParts) * 100);
+  if (initialProgress > 0) {
+    context.reportProgress(initialProgress);
+  }
+
+  try {
+    // Upload remaining parts
+    for (let partNumber = 1; partNumber <= totalParts; partNumber++) {
+      if (uploadedPartNumbers.has(partNumber)) {
+        continue; // Skip already uploaded parts
+      }
+
+      const start = (partNumber - 1) * chunkSize;
+      const end = Math.min(start + chunkSize, fileSize);
+      const partSize = end - start;
+
+      const chunkData = await readFileChunk(filePath, start, partSize);
+
+      // Upload part with retry
+      let partResult: PartUploadResult | null = null;
+      for (let retry = 0; retry < 3; retry++) {
+        try {
+          const result = await client.uploadPart(objectKey, uploadId, partNumber, chunkData, 0, partSize);
+          partResult = { partNumber, etag: result.etag };
+          break;
+        } catch (error: any) {
+          if (retry === 2) throw error;
+          await sleep(1000 * (retry + 1));
+        }
+      }
+
+      if (partResult) {
+        uploadedParts.push(partResult);
+
+        // Update checkpoint
+        checkpoint.uploadedParts = uploadedParts;
+        await saveCheckpoint(checkpoint, checkpointPath);
+
+        // Report progress
+        const progress = Math.round((uploadedParts.length / totalParts) * 100);
+        context.reportProgress(progress);
+      }
+    }
+
+    // Complete multipart upload
+    const parts = uploadedParts.map(part => ({ number: part.partNumber, etag: part.etag }));
+    await client.completeMultipartUpload(objectKey, uploadId, parts);
+
+    // Clean up checkpoint
+    await removeCheckpoint(checkpointPath);
+
+    return {
+      resumedFromCheckpoint,
+      totalParts
+    };
+
+  } catch (error) {
+    // Keep checkpoint for future resume
+    console.error('Upload failed, checkpoint saved for resume:', error);
+    throw error;
+  }
 }
 
 export default async function (
@@ -155,6 +366,7 @@ export default async function (
       try {
         // Initialize progress tracking
         let uploadProgress = 0;
+        let resumedFromCheckpoint = false;
 
         // For small files, use simple put method
         if (fileSize < 1024 * 1024) { // Less than 1MB
@@ -165,15 +377,23 @@ export default async function (
           uploadProgress = 100;
           context.reportProgress(100);
         } else {
-          // For larger files, use multipart upload with progress tracking
-          await client.multipartUpload(objectKey, params.localfile, {
-            mime: mimeType,
-            progress: (p: number) => {
-              uploadProgress = Math.round(p * 100);
-              // Report progress to OOMOL platform
-              context.reportProgress(uploadProgress);
-            }
-          });
+          // For larger files, use resumable multipart upload or standard multipart
+          if (params.enableResumableUpload) {
+            const chunkSize = Math.max(params.chunkSize ?? 5 * 1024 * 1024, 100 * 1024); // Min 100KB, default 5MB
+            const resumableResult = await resumableMultipartUpload(client, objectKey, params.localfile, fileSize, mimeType, chunkSize, context);
+            uploadProgress = 100;
+            resumedFromCheckpoint = resumableResult.resumedFromCheckpoint;
+          } else {
+            // Standard multipart upload without resumable support
+            await client.multipartUpload(objectKey, params.localfile, {
+              mime: mimeType,
+              progress: (p: number) => {
+                uploadProgress = Math.round(p * 100);
+                // Report progress to OOMOL platform
+                context.reportProgress(uploadProgress);
+              }
+            });
+          }
         }
 
         // Generate the URL properly
@@ -188,6 +408,8 @@ export default async function (
           mimeType: mimeType,
           uploadTime: new Date().toISOString(),
           progress: 100,
+          resumedFromCheckpoint: params.enableResumableUpload ? resumedFromCheckpoint : undefined,
+          totalParts: params.enableResumableUpload && fileSize >= 1024 * 1024 ? Math.ceil(fileSize / Math.max(params.chunkSize ?? 5 * 1024 * 1024, 100 * 1024)) : undefined,
         };
 
       } catch (error: any) {

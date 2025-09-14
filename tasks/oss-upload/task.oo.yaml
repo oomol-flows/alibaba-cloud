@@ -94,6 +94,20 @@ inputs_def:
       maximum: 5
     value: 3
     nullable: false
+  - handle: enableResumableUpload
+    description: "Enable resumable upload with checkpoint support for large files"
+    json_schema:
+      type: boolean
+    value: true
+    nullable: false
+  - handle: chunkSize
+    description: "Chunk size for resumable upload (bytes, minimum 100KB, default 1MB)"
+    json_schema:
+      type: number
+      minimum: 102400
+      maximum: 10485760
+    value:
+    nullable: true
 outputs_def:
   - handle: url
     description: "Public URL of the uploaded file in OSS"
@@ -125,6 +139,16 @@ outputs_def:
       type: number
       minimum: 0
       maximum: 100
+  - handle: resumedFromCheckpoint
+    description: "Whether the upload was resumed from a previous checkpoint"
+    json_schema:
+      type: boolean
+    nullable: true
+  - handle: totalParts
+    description: "Total number of parts for multipart upload"
+    json_schema:
+      type: number
+    nullable: true
 ui:
   default_width: 450
 executor:
@@ -134,6 +158,6 @@ executor:
     entry: main.ts
 title: "OSS Upload"
 description: "Upload files to Alibaba Cloud Object Storage Service (OSS) with
-  comprehensive features including custom paths, retry mechanism, and detailed
-  output information"
+  comprehensive features including custom paths, retry mechanism, resumable
+  upload with checkpoint support, and detailed output information"
 icon: ":carbon:cloud-upload:"

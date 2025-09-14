@@ -19,3 +19,7 @@ nodes:
         value: true
       - handle: maxRetries
         value: 2
+      - handle: enableResumableUpload
+        value: true
+      - handle: chunkSize
+        value: 512000

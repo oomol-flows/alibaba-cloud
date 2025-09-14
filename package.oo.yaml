@@ -8,7 +8,7 @@ icon: https://package-assets.oomol.com/packages/alibaba-cloud/0.0.1/files/packag
 dependencies:
   {}
 name: alibaba-cloud
-description: Various blocks based on Alibaba Cloud API services
-displayName: Alibaba Cloud
+description: "%key%"
+displayName: "%alibaba-cloud%"
 repository: https://github.com/oomol-flows/alibaba-cloud
 releaseNotes: add layer

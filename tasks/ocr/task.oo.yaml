@@ -4,15 +4,15 @@ inputs_def:
     json_schema:
       contentMediaType: oomol/secret
       type: string
+    value: ${{OO_SECRET:AliCloud,AliCloud,ACCESSKEY_ID}}
   - handle: accessKeySecret
     json_schema:
       contentMediaType: oomol/secret
       type: string
-    value: ""
+    value: ${{OO_SECRET:AliCloud,AliCloud,ACCESSKEY_SECRET}}
   - handle: url
     json_schema:
       type: string
-    value: ""
   - handle: type
     json_schema:
       enum:
@@ -22,7 +22,7 @@ inputs_def:
         labels:
           - General
           - Advanced
-    value: ""
+    value: General
 outputs_def:
   - handle: content
     description: Output
