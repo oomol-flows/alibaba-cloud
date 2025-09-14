@@ -1,0 +1,21 @@
+title: "Test OSS Upload Enhanced Features"
+nodes:
+  - node_id: oss_upload_test#1
+    task: self::oss-upload
+    inputs_from:
+      - handle: region
+        value: oss-cn-hangzhou
+      - handle: accessKeyId
+        value: ${{OO_SECRET:AliCloud,alibaba-cloud,AccessKey_ID}}
+      - handle: accessKeySecret
+        value: ${{OO_SECRET:AliCloud,alibaba-cloud,AccessKey_Secret}}
+      - handle: bucket
+        value: oomol-flows
+      - handle: localfile
+        value: /oomol-driver/oomol-storage/oomol_video_audio.mp3
+      - handle: customPath
+        value:
+      - handle: keepOriginalName
+        value: true
+      - handle: maxRetries
+        value: 2

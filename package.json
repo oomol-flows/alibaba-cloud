@@ -5,6 +5,8 @@
     "@alicloud/openapi-client": "^0.4.12",
     "@alicloud/tea-util": "^1.4.9",
     "@types/ali-oss": "^6.16.11",
-    "ali-oss": "^6.22.0"
+    "ali-oss": "^6.22.0",
+    "mime-types": "^2.1.35",
+    "@types/mime-types": "^2.1.4"
   }
 }

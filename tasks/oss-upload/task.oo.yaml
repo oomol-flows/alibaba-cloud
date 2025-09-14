@@ -1,48 +1,130 @@
 inputs_def:
   - handle: region
-    description: Input
+    description: "OSS region endpoint for the upload location"
     json_schema:
+      type: string
       enum:
         - oss-cn-hangzhou
-        - " oss-cn-beijing"
+        - oss-cn-beijing
         - oss-cn-shanghai
+        - oss-cn-qingdao
+        - oss-cn-zhangjiakou
+        - oss-cn-huhehaote
+        - oss-cn-shenzhen
+        - oss-cn-chengdu
+        - oss-cn-hongkong
         - oss-us-west-1
         - oss-us-east-1
+        - oss-ap-southeast-1
+        - oss-ap-southeast-2
+        - oss-ap-southeast-3
+        - oss-ap-southeast-5
+        - oss-ap-northeast-1
+        - oss-ap-south-1
+        - oss-eu-central-1
+        - oss-eu-west-1
+        - oss-me-east-1
       ui:options:
         labels:
-          - oss-cn-hangzhou
-          - " oss-cn-beijing"
-          - oss-cn-shanghai
-          - oss-us-west-1
-          - oss-us-east-1
+          - "China East 1 (Hangzhou)"
+          - "China North 2 (Beijing)"
+          - "China East 2 (Shanghai)"
+          - "China North 1 (Qingdao)"
+          - "China North 3 (Zhangjiakou)"
+          - "China North 5 (Huhehaote)"
+          - "China South 1 (Shenzhen)"
+          - "China Southwest 1 (Chengdu)"
+          - "China Hong Kong"
+          - "US West 1 (Silicon Valley)"
+          - "US East 1 (Virginia)"
+          - "Asia Pacific SE 1 (Singapore)"
+          - "Asia Pacific SE 2 (Sydney)"
+          - "Asia Pacific SE 3 (Kuala Lumpur)"
+          - "Asia Pacific SE 5 (Jakarta)"
+          - "Asia Pacific NE 1 (Japan)"
+          - "Asia Pacific South 1 (Mumbai)"
+          - "Europe Central 1 (Frankfurt)"
+          - "Europe West 1 (London)"
+          - "Middle East 1 (Dubai)"
     value: oss-cn-hangzhou
+    nullable: false
   - handle: accessKeyId
+    description: "Alibaba Cloud Access Key ID for OSS authentication"
     json_schema:
       contentMediaType: oomol/secret
       type: string
     value: ${{OO_SECRET:AliCloud,AliCloud,AccessKey_ID}}
+    nullable: false
   - handle: accessKeySecret
+    description: "Alibaba Cloud Access Key Secret for OSS authentication"
     json_schema:
       contentMediaType: oomol/secret
       type: string
     value: ${{OO_SECRET:AliCloud,AliCloud,AccessKey_Secret}}
+    nullable: false
   - handle: bucket
+    description: "OSS bucket name where the file will be uploaded"
     json_schema:
       type: string
     value: oomol-flows
+    nullable: false
   - handle: localfile
+    description: "Local file path to upload to OSS"
     json_schema:
       type: string
       ui:widget: file
+    nullable: false
+  - handle: customPath
+    description: "Custom folder path in bucket (optional, e.g., 'images/2024/')"
+    json_schema:
+      type: string
+    value:
+    nullable: true
+  - handle: keepOriginalName
+    description: "Keep original filename instead of adding timestamp prefix"
+    json_schema:
+      type: boolean
+    value: false
+    nullable: false
+  - handle: maxRetries
+    description: "Maximum number of retry attempts for failed uploads"
+    json_schema:
+      type: number
+      minimum: 0
+      maximum: 5
+    value: 3
+    nullable: false
 outputs_def:
   - handle: url
-    description: Output
+    description: "Public URL of the uploaded file in OSS"
     json_schema:
       type: string
-      ui:widget: file
   - handle: originFilePath
+    description: "Original local file path that was uploaded"
     json_schema:
       type: string
+  - handle: objectKey
+    description: "Object key (path) of the file in OSS bucket"
+    json_schema:
+      type: string
+  - handle: fileSize
+    description: "Size of the uploaded file in bytes"
+    json_schema:
+      type: number
+  - handle: mimeType
+    description: "MIME type of the uploaded file"
+    json_schema:
+      type: string
+  - handle: uploadTime
+    description: "Upload completion time in ISO format"
+    json_schema:
+      type: string
+  - handle: progress
+    description: "Upload progress percentage (0-100)"
+    json_schema:
+      type: number
+      minimum: 0
+      maximum: 100
 ui:
   default_width: 450
 executor:
@@ -50,5 +132,8 @@ executor:
   options:
     spawn: false
     entry: main.ts
-title: oss-upload
+title: "OSS Upload"
+description: "Upload files to Alibaba Cloud Object Storage Service (OSS) with
+  comprehensive features including custom paths, retry mechanism, and detailed
+  output information"
 icon: ":carbon:cloud-upload:"

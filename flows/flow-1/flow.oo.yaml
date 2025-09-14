@@ -13,3 +13,17 @@ nodes:
         value: oomol-flows
       - handle: localfile
         value: /oomol-driver/oomol-storage/a66c4895-77cb-4657-83ac-a9be40a19b8a_resized_235x400_cropped_235x200.jpg
+  - node_id: +python#1
+    title: "Python #1"
+    icon: ":logos:python:"
+    task:
+      ui:
+        default_width: 450
+      inputs_def:
+        []
+      outputs_def:
+        []
+      executor:
+        name: python
+        options:
+          entry: scriptlets/+scriptlet#1.py

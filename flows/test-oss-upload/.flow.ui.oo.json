@@ -1,0 +1,14 @@
+{
+  "title": "Test OSS Upload Enhanced",
+  "icon": ":carbon:test-tool:",
+  "default_width": 500,
+  "nodes": [
+    {
+      "node_id": "oss_upload_test#1",
+      "position": {
+        "x": 100,
+        "y": 100
+      }
+    }
+  ]
+}
